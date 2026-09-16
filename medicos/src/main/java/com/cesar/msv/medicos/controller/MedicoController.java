@@ -28,10 +28,10 @@ public class MedicoController extends CrudController<MedicoRequest, MedicoRespon
     @PutMapping("/{idMedico}/disponibilidad/{idDisponibilidad}")
     @Operation(summary = "ACtuializar la disponibilidad de medicos" + "(No es endpoint libre, debe gestionarlo con elsistema de citas)")
     public ResponseEntity<Void> actualizarDisponibilidadMedico(
-            @PathVariable @Positive(message = "El id debe ser positivo")Long idMEdico,
+            @PathVariable @Positive(message = "El id debe ser positivo")Long idMedico,
             @PathVariable @Positive(message = "El id debe ser positivo")Long idDisponibilidad
     ){
-        services.actualizarDisponibilidadMedico(idMEdico,idDisponibilidad);
+        services.actualizarDisponibilidadMedico(idMedico,idDisponibilidad);
         return ResponseEntity.noContent().build();
     }
 }

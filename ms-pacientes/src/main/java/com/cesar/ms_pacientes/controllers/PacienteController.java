@@ -29,11 +29,17 @@ public class PacienteController {
     public List<PacienteResponse> listar() { return service.listar(); }
 
     @GetMapping("/{id}")
-    public PacienteResponse obtener(@PathVariable @Positive Long id) { return service.obtener(id); }
+    public PacienteResponse obtener(@PathVariable @Positive Long id) { return service.obtenerPorId(id); }
 
     @PutMapping("/{id}")
     public PacienteResponse actualizar(@PathVariable @Positive Long id,
             @Valid @RequestBody PacienteRequest request) { return service.actualizar(request,id); }
+
+
+    @GetMapping("/sin-estado/{id}")
+    public PacienteResponse obtenerPorIdSinEstado(@PathVariable @Positive Long id){
+        return  service.obtenerPacientePorIdSinEstado(id);
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable @Positive Long id) {

@@ -12,9 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,68 +31,65 @@ public class PacienteServiceImpl implements PacienteService {
 
     @Override
     public PacienteResponse obtenerPorId(Long id) {
-        return pacienteMapper.entidadAResponse(buscarMedicoActivoPorId(id));
+        return pacienteMapper.entidadAResponse(buscarPacienteActivoPorId(id));
     }
 
     @Override
     public PacienteResponse obtenerPacientePorIdSinEstado(Long id) {
         return pacienteMapper.entidadAResponse(pacienteRepository.findById(id)
                 .orElseThrow(()->new RecursoNoEncontradoException(
-                        "Medico sin estado no encontrado con id: " + id)));
+                        "Paciente no encontrado con id: " + id)));
     }
 
     @Override
     public PacienteResponse registrar(PacienteRequest request) {
-        //double imc = calcularImc(request);
-        Paciente paciente = pacienteMapper.requestAEntidad(request).toBuilder()
-                .estadoRegistro(EstadoRegistro.ACTIVO)
-                .numeroExpediente(
-                        UUID.randomUUID().toString().replace("-","").substring(0,20))
-                .imc(calcularImc(request))
-                .build();
+        double imc = calcularImc(request);
+        Paciente paciente = pacienteMapper.requestAEntidad(request);
+
+        String numeroExpediente=generarNumeroExpediente(request.telefono());
+        paciente.asignarImcNumExpEstadoReg(imc, numeroExpediente, EstadoRegistro.ACTIVO);
         return pacienteMapper.entidadAResponse(pacienteRepository.save(paciente));
     }
 
 
     @Override
     public PacienteResponse actualizar(PacienteRequest request, Long id) {
-        Paciente paciente = buscarMedicoActivoPorId(id);
-        Paciente actualizado = pacienteMapper.requestAEntidad(request).toBuilder()
-                .id(paciente.getId())
-                .numeroExpediente(paciente.getNumeroExpediente())
-                .estadoRegistro(paciente.getEstadoRegistro())
-                .imc(calcularImc(request))
-                .build();
-        return pacienteMapper.entidadAResponse(pacienteRepository.save(actualizado));
+        Paciente paciente = buscarPacienteActivoPorId(id);
+        double imc = calcularImc(request);
+        paciente.actualizar(
+                request.nombre(),
+                request.apellidoPaterno(),
+                request.apellidoMaterno(),
+                request.edad().shortValue(),
+                request.peso(),
+                request.estatura(),
+                imc,
+                request.email(),
+                paciente.getNumeroExpediente(),
+                request.telefono(),
+                request.direccion(),
+                paciente.getEstadoRegistro());
+        return pacienteMapper.entidadAResponse(paciente);
     }
 
-
-   /* @Transactional
-    public PacienteResponse crear(@NotNull @Valid PacienteRequest request) {
-        double imc = calcularImc(request);
-        Paciente base = Paciente.builder().estadoRegistro(EstadoRegistro.ACTIVO)
-                .numeroExpediente(UUID.randomUUID().toString().replace("-", "").substring(0, 20))
-                .imc(imc).build();
-        return mapper.toResponse(repository.save(mapper.conDatos(request, base)));
-    }*/
-
-   /* @Transactional
-    public PacienteResponse actualizar(@Positive Long id, @NotNull @Valid PacienteRequest request) {
-        Paciente actual = buscar(id);
-        Paciente actualizado = mapper.conDatos(request, actual).toBuilder()
-                .imc(calcularImc(request)).build();
-        return mapper.toResponse(repository.save(actualizado));
-    }*/
 
     @Override
     public void eliminar(Long id) {
-        Paciente paciente = buscarMedicoActivoPorId(id);
-        paciente.el
+        Paciente paciente = buscarPacienteActivoPorId(id);
+        paciente.eliminar();
     }
 
-    private Paciente buscarMedicoActivoPorId(Long id) {
+    private Paciente buscarPacienteActivoPorId(Long id) {
         return pacienteRepository.findByIdAndEstadoRegistro(id, EstadoRegistro.ACTIVO)
                 .orElseThrow(() -> new PacienteNoEncontradoException(id));
+    }
+
+    private String generarNumeroExpediente(String telefono){
+        StringBuilder expediente = new StringBuilder();
+        for (char digito : telefono.toCharArray()){
+            expediente.append(digito).append('X');
+        }
+        return expediente.toString();
     }
 
     private double calcularImc(PacienteRequest request) {

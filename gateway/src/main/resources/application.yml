@@ -16,6 +16,19 @@ spring:
               filters:
                 - StripPrefix=2
 
+            - id: citas
+              uri: lb://citas
+              predicates:
+                - Path=/api/citas/**
+              filters:
+                - StripPrefix=2
+
+            - id: pacientes
+              uri: lb://ms-pacientes
+              predicates:
+                - Path=/api/pacientes/**
+
+
             - id: servicio-b
               uri: lb://servicio-b
               predicates:

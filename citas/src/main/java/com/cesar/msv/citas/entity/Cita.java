@@ -58,6 +58,12 @@ public class Cita {
         StringCustomUtils.validarTamanio(sintomas,20,500, "Los sintomas son requeridos y deben ser entre 20 y 500 caracteres");
     }
 
+    private void validarEdicionPermitida(){
+        validarNoEliminada();
+        if (estadoCita != EstadoCita.PENDIENTE && estadoCita != EstadoCita.CONFIRMADA)
+            throw new IllegalStateException("Solo confirmada y pendiente permiten la edicon de la cita");
+    }
+
     private void validarEliminacionPermitida(){
         validarNoEliminada();
         if (!estadoCita.isEliminable())
@@ -72,6 +78,7 @@ public class Cita {
 
     public  void actualizar(Long idPaciente, Long idMedico,
                             LocalDateTime fechaCita, String sintomas){
+        validarEdicionPermitida();
         validarDatos(idPaciente, idMedico, fechaCita, sintomas);
         this.idPaciente = idPaciente;
         this.idMedico = idMedico;

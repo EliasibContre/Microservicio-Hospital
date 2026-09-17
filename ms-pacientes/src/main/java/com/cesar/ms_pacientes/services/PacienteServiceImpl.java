@@ -1,5 +1,6 @@
 package com.cesar.ms_pacientes.services;
 
+import com.cesar.commons.clients.CitaClient;
 import com.cesar.commons.dto.paciente.PacienteRequest;
 import com.cesar.commons.dto.paciente.PacienteResponse;
 import com.cesar.commons.exceptions.RecursoNoEncontradoException;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class PacienteServiceImpl implements PacienteService {
     private final PacienteRepository pacienteRepository;
     private final PacienteMapper pacienteMapper;
+    private final CitaClient citaClient;
 
     @Override
     public List<PacienteResponse> listar() {
@@ -55,6 +57,7 @@ public class PacienteServiceImpl implements PacienteService {
     @Override
     public PacienteResponse actualizar(PacienteRequest request, Long id) {
         Paciente paciente = buscarPacienteActivoPorId(id);
+        validarPacientesSinCitasBloqueantes(id);
         double imc = calcularImc(request);
         paciente.actualizar(
                 request.nombre(),
@@ -76,12 +79,18 @@ public class PacienteServiceImpl implements PacienteService {
     @Override
     public void eliminar(Long id) {
         Paciente paciente = buscarPacienteActivoPorId(id);
+        validarPacientesSinCitasBloqueantes(id);
         paciente.eliminar();
     }
 
     private Paciente buscarPacienteActivoPorId(Long id) {
         return pacienteRepository.findByIdAndEstadoRegistro(id, EstadoRegistro.ACTIVO)
                 .orElseThrow(() -> new PacienteNoEncontradoException(id));
+    }
+
+    private void validarPacientesSinCitasBloqueantes(Long idPaciente){
+        if (citaClient.tieneCitasQueBloqueanPaciente(idPaciente))
+            throw new IllegalStateException("El paciente tiene citas confirmaDas o en curso, no puede modificarse ni eliminarse");
     }
 
     private String generarNumeroExpediente(String telefono){

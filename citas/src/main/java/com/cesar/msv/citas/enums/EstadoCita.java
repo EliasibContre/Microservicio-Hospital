@@ -12,7 +12,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Getter
 public enum EstadoCita {
-    PENDIENTE(1L,"Pendiente por confirmar",true,false) {
+    PENDIENTE(1L,"Pendiente por confirmar",true,true) {
         @Override
         public Set<EstadoCita> puedeCambiar() {
             return EnumSet.of(CONFIRMADA, CANCELADA);

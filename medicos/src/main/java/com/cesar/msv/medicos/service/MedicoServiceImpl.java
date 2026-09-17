@@ -1,5 +1,6 @@
 package com.cesar.msv.medicos.service;
 
+import com.cesar.commons.clients.CitaClient;
 import com.cesar.commons.dto.medico.MedicoRequest;
 import com.cesar.commons.dto.medico.MedicoResponse;
 
@@ -26,6 +27,7 @@ public class MedicoServiceImpl implements MedicoService{
 
     private final MedicoRepository medicoRepository;
     private final MedicoMapper medicoMapper;
+    private final CitaClient citaClient;
 
     @Override
     public List<MedicoResponse> listar() {
@@ -64,6 +66,7 @@ public class MedicoServiceImpl implements MedicoService{
     @Override
     public MedicoResponse actualizar(MedicoRequest request, Long id) {
         Medico medico =obtenerMedicoActivoPorId(id);
+        validarMedicosCitasBloqueantes(id);
         log.info("Actualizando medico con id: {}", id);
         validarCambiossUnicos(request,id);
         medico.actualizar(
@@ -93,6 +96,7 @@ public class MedicoServiceImpl implements MedicoService{
     @Override
     public void eliminar(Long id) {
         Medico medico =obtenerMedicoActivoPorId(id);
+        validarMedicosCitasBloqueantes(id);
         log.info("Eliminando medico con id: {}", id);
         medico.eliminar();
         log.info("Medico eliminado exitoso");
@@ -106,6 +110,11 @@ public class MedicoServiceImpl implements MedicoService{
 
 
     }
+    private void validarMedicosCitasBloqueantes(Long idMedico){
+        log.info("consultando si medicos tienen citas confirmadas o en curso");
+        if (citaClient.tieneCitasQueBloqueanMedico(idMedico))
+            throw new IllegalStateException("El medico tiene citas confirmadas o en curso y no se pueden modificar ni eliminar");
+    }
     private void validarDatosUnicos(MedicoRequest request){
         log.info("Validando datos del medico");
         if (medicoRepository.existsByEmailIgnoreCaseAndEstadoRegistro(
@@ -114,11 +123,11 @@ public class MedicoServiceImpl implements MedicoService{
         log.info("Validando datos del medico");
         if (medicoRepository.existsByTelefonoAndEstadoRegistro(
                 request.telefono(),EstadoRegistro.ACTIVO))
-            throw new IllegalArgumentException("Ya existe medico registrado con ese email" + request.telefono());
+            throw new IllegalArgumentException("Ya existe medico registrado con ese telefono: " + request.telefono());
         log.info("Validando datos del medico");
         if (medicoRepository.existsByCedulaProfesionalIgnoreCaseAndEstadoRegistro(
                 request.cedulaProfesional(),EstadoRegistro.ACTIVO))
-            throw new IllegalArgumentException("Ya existe medico registrado con ese email" + request.cedulaProfesional());
+            throw new IllegalArgumentException("Ya existe medico registrado con esa cedula: " + request.cedulaProfesional());
     }
 
     private void validarCambiossUnicos(MedicoRequest request, Long id){

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +37,18 @@ public class CitaController extends CrudController<CitaRequest, CitaResponse, Ci
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/pacientes/{idPaciente}/bloqueo")
+    public  boolean comprobarEstadoCitaPaciente(@PathVariable @Positive Long idPaciente){
+        return services.tieneCitasQueBloqueanPaciente(idPaciente);
+
+    }
+
+    @GetMapping("/medicos/{idMedico}/bloqueo")
+    public boolean comprobarEstadoCitaMedico(@PathVariable @Positive Long idMedico){
+        return services.tieneCitasQueBloqueanMedico(idMedico);
+    }
+
 
 
 }

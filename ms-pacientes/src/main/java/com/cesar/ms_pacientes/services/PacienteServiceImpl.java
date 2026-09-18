@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Validated
@@ -25,18 +24,22 @@ public class PacienteServiceImpl implements PacienteService {
     private final PacienteMapper pacienteMapper;
     private final CitaClient citaClient;
 
+
     @Override
+    @Transactional(readOnly = true)
     public List<PacienteResponse> listar() {
         return pacienteRepository.findByEstadoRegistroOrderByIdAsc(EstadoRegistro.ACTIVO)
                 .stream().map(pacienteMapper::entidadAResponse).toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PacienteResponse obtenerPorId(Long id) {
         return pacienteMapper.entidadAResponse(buscarPacienteActivoPorId(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PacienteResponse obtenerPacientePorIdSinEstado(Long id) {
         return pacienteMapper.entidadAResponse(pacienteRepository.findById(id)
                 .orElseThrow(()->new RecursoNoEncontradoException(
@@ -45,20 +48,17 @@ public class PacienteServiceImpl implements PacienteService {
 
     @Override
     public PacienteResponse registrar(PacienteRequest request) {
-        double imc = calcularImc(request);
         Paciente paciente = pacienteMapper.requestAEntidad(request);
-
-        String numeroExpediente=generarNumeroExpediente(request.telefono());
-        paciente.asignarImcNumExpEstadoReg(imc, numeroExpediente, EstadoRegistro.ACTIVO);
-        return pacienteMapper.entidadAResponse(pacienteRepository.save(paciente));
+        return pacienteMapper.entidadAResponse(
+                pacienteRepository.save(paciente)
+        );
     }
-
 
     @Override
     public PacienteResponse actualizar(PacienteRequest request, Long id) {
         Paciente paciente = buscarPacienteActivoPorId(id);
         validarPacientesSinCitasBloqueantes(id);
-        double imc = calcularImc(request);
+
         paciente.actualizar(
                 request.nombre(),
                 request.apellidoPaterno(),
@@ -66,12 +66,11 @@ public class PacienteServiceImpl implements PacienteService {
                 request.edad().shortValue(),
                 request.peso(),
                 request.estatura(),
-                imc,
                 request.email(),
-                paciente.getNumeroExpediente(),
                 request.telefono(),
-                request.direccion(),
-                paciente.getEstadoRegistro());
+                request.direccion()
+        );
+
         return pacienteMapper.entidadAResponse(paciente);
     }
 
@@ -93,25 +92,4 @@ public class PacienteServiceImpl implements PacienteService {
             throw new IllegalStateException("El paciente tiene citas confirmaDas o en curso, no puede modificarse ni eliminarse");
     }
 
-    private String generarNumeroExpediente(String telefono){
-        StringBuilder expediente = new StringBuilder();
-        for (char digito : telefono.toCharArray()){
-            expediente.append(digito).append('X');
-        }
-        return expediente.toString();
-    }
-
-    private double calcularImc(PacienteRequest request) {
-        double peso = request.peso();
-        double estatura = request.estatura();
-        if (!Double.isFinite(peso) || !Double.isFinite(estatura)
-                || peso < 0.1 || peso > 200 || estatura < 1 || estatura > 2) {
-            throw new ReglaNegocioException("Peso o estatura fuera del rango permitido");
-        }
-        double imc = peso / (estatura * estatura);
-        if (imc < 10 || imc > 50) {
-            throw new ReglaNegocioException("El IMC calculado debe estar entre 10 y 50");
-        }
-        return imc;
-    }
 }

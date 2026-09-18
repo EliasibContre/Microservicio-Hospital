@@ -30,20 +30,21 @@ public class MedicoServiceImpl implements MedicoService{
     private final CitaClient citaClient;
 
     @Override
+    @Transactional(readOnly = true)
     public List<MedicoResponse> listar() {
         log.info("Listando todos los medicos");
-
-
         return medicoRepository.findByEstadoRegistro(EstadoRegistro.ACTIVO).stream()
                 .map(medicoMapper::entidadAResponse).toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MedicoResponse obtenerPorId(Long id) {
         return medicoMapper.entidadAResponse(obtenerMedicoActivoPorId(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MedicoResponse obtenerMedicoPorIdSinEstado(Long id) {
         log.info("Buscando medico con id: {}", id);
         return medicoMapper.entidadAResponse(medicoRepository.findById(id)
@@ -91,6 +92,16 @@ public class MedicoServiceImpl implements MedicoService{
         DisponibilidadMedico disponibilidadAnterior = medico.getDisponibilidad();
         medico.actualizarDisponibilidad(nuevaDisponibilidad);
         log.info("Disponibilidad del medico con id {} cambio de {} a {}", idMedico, disponibilidadAnterior, nuevaDisponibilidad);
+    }
+
+    @Override
+    public void actualizarDisponibilidadManual(Long idMedico, Long idDisponibilidad) {
+        Medico medico = obtenerMedicoActivoPorId(idMedico);
+        DisponibilidadMedico nuevaDisponibilidad =
+                DisponibilidadMedico.obtenerDisponibilidadMedico(idDisponibilidad);
+        if (citaClient.tieneCitasMedicoActivo(idMedico))
+            throw new IllegalStateException("No se puede cambiar manual la disponibilidad de un medic con citas pendeintes. confirmadas o en curso");
+        medico.actualizarDisponibilidad(nuevaDisponibilidad);
     }
 
     @Override

@@ -49,6 +49,11 @@ public class CitaController extends CrudController<CitaRequest, CitaResponse, Ci
         return services.tieneCitasQueBloqueanMedico(idMedico);
     }
 
+    @GetMapping("/medicos/{idMedico}/citas-activas")
+    public boolean comprobarEstadoCitaMEdicoActivo(@PathVariable @Positive Long idMedico){
+        return services.tieneCitasActivasMedico(idMedico);
+    }
+
 
 
 }

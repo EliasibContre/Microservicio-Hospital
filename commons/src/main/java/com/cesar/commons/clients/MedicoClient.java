@@ -5,6 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "medicos")
 public interface MedicoClient {
@@ -15,5 +16,9 @@ public interface MedicoClient {
     MedicoResponse obtenerMedicoSinEstadoPorId(@PathVariable Long id);
 
     @PutMapping("/{idMedico}/disponibilidad/{idDisponibilidad}")
-    MedicoResponse actualizarDisponibilidadMedico(@PathVariable Long idMedico, @PathVariable Long idDisponibilidad);
+    void actualizarDisponibilidadMedico(
+            @PathVariable("idMedico") Long idMedico,
+            @PathVariable("idDisponibilidad") Long idDisponibilidad,
+            @RequestHeader("X-Internal-Key") String claveInterna);
+
 }

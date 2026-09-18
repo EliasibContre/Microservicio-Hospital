@@ -11,4 +11,6 @@ public interface CitaClient {
     boolean tieneCitasQueBloqueanPaciente(@PathVariable Long idPaciente);
     @GetMapping("/medicos/{idMedico}/bloqueo")
     boolean tieneCitasQueBloqueanMedico(@PathVariable Long idMedico);
+    @GetMapping("/medicos/{idMedico}/citas-activas")
+    boolean tieneCitasMedicoActivo(@PathVariable Long idMedico);
 }
